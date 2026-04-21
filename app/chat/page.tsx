@@ -2,8 +2,14 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import ChatUI from '@/components/ChatUI';
+import { isIpAllowed } from '@/utils/ipCheck';
 
 export default async function ChatPage() {
+  const allowed = await isIpAllowed();
+  if (!allowed) {
+    redirect('/');
+  }
+
   const cookieStore = await cookies();
   const authToken = cookieStore.get('auth_token');
 

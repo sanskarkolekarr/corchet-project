@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -26,7 +25,15 @@ export default function Footer() {
   const handleSecretClick = () => {
     if (!isIpAllowed) return; // Only allow clicks if IP is authorized
 
-    setClickCount((prev) => prev + 1);
+    setClickCount((prev) => {
+      const next = prev + 1;
+      if (next >= 5) {
+        router.push('/secret');
+        if (timerRef.current) clearTimeout(timerRef.current);
+        return 0;
+      }
+      return next;
+    });
 
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -36,14 +43,6 @@ export default function Footer() {
       setClickCount(0);
     }, 2000);
   };
-
-  useEffect(() => {
-    if (clickCount >= 5) {
-      router.push('/secret');
-      setClickCount(0);
-      if (timerRef.current) clearTimeout(timerRef.current);
-    }
-  }, [clickCount, router]);
 
   return (
     <footer className="py-12 bg-brand-pink-light/30 border-t border-brand-pink-soft/20 text-center">

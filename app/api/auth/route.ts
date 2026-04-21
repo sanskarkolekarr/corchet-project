@@ -1,9 +1,18 @@
 
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { isIpAllowed } from '@/utils/ipCheck';
 
 export async function POST(request: Request) {
   try {
+    const allowed = await isIpAllowed();
+    if (!allowed) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized access point' },
+        { status: 403 }
+      );
+    }
+
     const { password } = await request.json();
     const secretPassword = process.env.SECRET_PASSWORD;
 
