@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const headersList = await headers();
   
   // Get IP from headers (standard practice for Next.js on Vercel/etc)

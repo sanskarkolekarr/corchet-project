@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { isIpAllowed } from '@/utils/ipCheck';
@@ -32,7 +31,7 @@ export async function POST(request: Request) {
       { success: false, message: 'Incorrect password' },
       { status: 401 }
     );
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, message: 'Invalid request' },
       { status: 400 }

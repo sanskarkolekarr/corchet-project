@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -29,7 +28,7 @@ export default function SecretPage() {
       } else {
         setError(data.message || 'Incorrect password');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);

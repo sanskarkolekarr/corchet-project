@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Footer() {
-  const [clickCount, setClickCount] = useState(0);
+  const clickCountRef = useRef(0);
   const [isIpAllowed, setIsIpAllowed] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
@@ -25,22 +25,21 @@ export default function Footer() {
   const handleSecretClick = () => {
     if (!isIpAllowed) return; // Only allow clicks if IP is authorized
 
-    setClickCount((prev) => {
-      const next = prev + 1;
-      if (next >= 5) {
-        router.push('/secret');
-        if (timerRef.current) clearTimeout(timerRef.current);
-        return 0;
-      }
-      return next;
-    });
+    clickCountRef.current += 1;
+
+    if (clickCountRef.current >= 5) {
+      router.push('/secret');
+      if (timerRef.current) clearTimeout(timerRef.current);
+      clickCountRef.current = 0;
+      return;
+    }
 
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
 
     timerRef.current = setTimeout(() => {
-      setClickCount(0);
+      clickCountRef.current = 0;
     }, 2000);
   };
 

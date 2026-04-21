@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { isIpAllowed } from '@/utils/ipCheck';
@@ -41,7 +40,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, message: data.result });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 }

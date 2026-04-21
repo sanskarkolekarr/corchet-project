@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -59,7 +58,7 @@ export default function ChatUI() {
           setMessages(prev => {
             // Merge unique messages from owner
             const existingIds = new Set(prev.map(m => String(m.id)));
-            const newOnes = data.messages.filter((m: any) => !existingIds.has(String(m.id)));
+            const newOnes = data.messages.filter((m: Message) => !existingIds.has(String(m.id)));
             
             if (newOnes.length === 0) return prev;
             
@@ -112,9 +111,8 @@ export default function ChatUI() {
       if (!res.ok) {
         throw new Error('Failed to send');
       }
-    } catch (err) {
+    } catch {
       alert('Failed to send message. Please try again.');
-      // Optionally remove from UI on failure, but usually better to show a "failed" state
     } finally {
       setLoading(false);
     }
