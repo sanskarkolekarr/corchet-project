@@ -1,0 +1,21 @@
+
+export const crochetImages = [
+  { id: 1, src: '/images/img1.jpg', alt: 'Crochet Creation 1' },
+  { id: 2, src: '/images/img2.jpg', alt: 'Crochet Creation 2' },
+  { id: 3, src: '/images/img3.jpg', alt: 'Crochet Creation 3' },
+  { id: 4, src: '/images/img4.jpg', alt: 'Crochet Creation 4' },
+  { id: 5, src: '/images/img5.jpg', alt: 'Crochet Creation 5' },
+  { id: 6, src: '/images/img6.jpg', alt: 'Crochet Creation 6' },
+  { id: 7, src: '/images/img7.jpg', alt: 'Crochet Creation 7' },
+  { id: 8, src: '/images/img8.jpg', alt: 'Crochet Creation 8' },
+  { id: 9, src: '/images/img9.jpg', alt: 'Crochet Creation 9' },
+  { id: 10, src: '/images/img10.jpg', alt: 'Crochet Creation 10' },
+  { id: 11, src: '/images/img11.jpg', alt: 'Crochet Creation 11' },
+  { id: 12, src: '/images/img12.jpg', alt: 'Crochet Creation 12' },
+  { id: 13, src: '/images/img13.jpg', alt: 'Crochet Creation 13' },
+  { id: 14, src: '/images/img14.jpg', alt: 'Crochet Creation 14' },
+  { id: 15, src: '/images/img15.jpg', alt: 'Crochet Creation 15' },
+  { id: 16, src: '/images/img16.jpg', alt: 'Crochet Creation 16' },
+  { id: 17, src: '/images/img17.jpg', alt: 'Crochet Creation 17' },
+  { id: 18, src: '/images/img18.jpg', alt: 'Crochet Creation 18' },
+];

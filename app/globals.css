@@ -1,0 +1,43 @@
+
+@import "tailwindcss";
+
+@theme {
+  --color-brand-pink-light: #fce4ec;
+  --color-brand-pink-soft: #f8d7da;
+  --color-brand-pink-accent: #f48fb1;
+  --color-brand-text: #4a4a4a;
+  
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #4a4a4a;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.soft-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.hover-zoom {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-zoom:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+@layer base {
+  * {
+    @apply border-brand-pink-soft/20;
+  }
+}
