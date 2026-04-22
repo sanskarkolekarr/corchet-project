@@ -1,10 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 
-const DATA_FILE = path.join(process.cwd(), 'device_data.json');
+const DATA_FILE = path.join(process.cwd(), 'data', 'device_data.json');
+
+function ensureDataDir() {
+  const dir = path.dirname(DATA_FILE);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
 
 export function getAllowedDevice() {
   try {
+    ensureDataDir();
     if (fs.existsSync(DATA_FILE)) {
       const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
       if (data.USER_DEVICE_ID) {
@@ -20,6 +28,7 @@ export function getAllowedDevice() {
 
 export function setAllowedDevice(id: string) {
   try {
+    ensureDataDir();
     let data: any = {};
     if (fs.existsSync(DATA_FILE)) {
       data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
