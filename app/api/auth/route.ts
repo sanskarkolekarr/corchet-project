@@ -8,7 +8,6 @@ export async function POST(request: Request) {
     const secretPassword = process.env.SECRET_PASSWORD;
     const adminPassword = process.env.ADMIN_PASSWORD;
     const allowedUserDevice = getAllowedDevice();
-    const allowedAdminDevice = process.env.ADMIN_DEVICE_ID;
 
     const isMatch = password === secretPassword && dId === allowedUserDevice;
     const isAdminMatch = password === adminPassword;
