@@ -63,7 +63,14 @@ export async function GET() {
           console.log(`Found /setid command from chat ${msgChatId}: ${text}`);
           const newId = text.split(' ')[1];
           if (newId && msgChatId) {
-            const { setAllowedDevice } = require('@/utils/deviceStorage');
+            const { setAllowedDevice, getAllowedDevice } = require('@/utils/deviceStorage');
+            
+            // Double-lock: Only process if it's actually a NEW ID
+            if (getAllowedDevice() === newId) {
+              console.log('ID is already set to this value, skipping...');
+              continue;
+            }
+
             setAllowedDevice(newId);
 
             // Send confirmation back to Telegram

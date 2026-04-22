@@ -11,6 +11,8 @@ services:
       - .env.local
     volumes:
       - ./.env.local:/app/.env.local
+      - ./device_data.json:/app/device_data.json
+      - ./last_update_id.txt:/app/last_update_id.txt
 
   nginx:
     image: nginx:latest
