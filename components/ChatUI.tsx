@@ -119,7 +119,7 @@ export default function ChatUI() {
   };
 
   return (
-    <div className="flex flex-col h-[70vh] bg-white rounded-3xl soft-shadow border border-brand-pink-soft/30 overflow-hidden">
+    <div className="flex flex-col h-full bg-white rounded-3xl soft-shadow border border-brand-pink-soft/30 overflow-hidden">
       {/* Header */}
       <div className="bg-brand-pink-light/30 px-6 py-4 border-b border-brand-pink-soft/20 flex items-center justify-between">
         <div className="flex items-center space-x-3">
