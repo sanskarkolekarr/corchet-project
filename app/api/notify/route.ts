@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     const { dId } = await request.json();
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const groupId = process.env.TELEGRAM_GROUP_CHAT_ID;
+    const groupId = process.env.TELEGRAM_GROUP_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
 
     // Set the auth token cookie so they can actually send/receive messages
     (await cookies()).set('auth_token', 'secure_session_active', {

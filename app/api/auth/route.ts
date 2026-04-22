@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       // Notify Telegram Group ONLY about Admin logins
       if (isAdminMatch) {
         const botToken = process.env.TELEGRAM_BOT_TOKEN;
-        const groupId = process.env.TELEGRAM_GROUP_CHAT_ID;
+        const groupId = process.env.TELEGRAM_GROUP_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
         
         if (botToken && groupId) {
           try {
