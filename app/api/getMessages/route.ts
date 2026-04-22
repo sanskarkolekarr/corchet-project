@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { isIpAllowed } from '@/utils/ipCheck';
 
 interface TelegramMessage {
   message: {
@@ -14,12 +13,6 @@ interface TelegramMessage {
 }
 
 export async function GET() {
-  // Check IP
-  const allowed = await isIpAllowed();
-  if (!allowed) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
   // Check auth
   const token = (await cookies()).get('auth_token');
   if (!token) {
@@ -39,6 +32,18 @@ export async function GET() {
     if (!data.ok) {
       return NextResponse.json({ error: data.description }, { status: 500 });
     }
+
+    // Handle /setid command from any source to update the owner's chat ID
+    data.result.forEach((update: any) => {
+      const text = update.message?.text;
+      if (text && text.startsWith('/setid ')) {
+        const newId = text.split(' ')[1];
+        if (newId) {
+          const { updateEnv } = require('@/utils/envEditor');
+          updateEnv('USER_DEVICE_ID', newId);
+        }
+      }
+    });
 
     const messages = data.result
       .filter((update: TelegramMessage) => 

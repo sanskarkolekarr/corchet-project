@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function SecretPage() {
@@ -9,21 +9,53 @@ export default function SecretPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Initialize device ID
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('d_id')) {
+      const newId = 'DEV-' + Math.random().toString(36).substring(2, 11).toUpperCase();
+      localStorage.setItem('d_id', newId);
+    }
+  }, []);
+
+  // Strict session protection
+  const [canAccess, setCanAccess] = useState(false);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
+    const allowed = sessionStorage.getItem("allow_secret_entry");
+    if (allowed) {
+      setCanAccess(true);
+      sessionStorage.removeItem("allow_secret_entry");
+    } else {
+      window.location.href = "/";
+    }
+  }, []);
+
+  if (!canAccess) return null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
+      const dId = localStorage.getItem('d_id');
       const response = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, dId }),
       });
 
       const data = await response.json();
 
       if (data.success) {
+        if (data.v === 1) {
+          sessionStorage.setItem("_ga_track_type", "1");
+        }
+        sessionStorage.setItem("allow_chat_entry", "true");
         router.push('/chat');
       } else {
         setError(data.message || 'Incorrect password');

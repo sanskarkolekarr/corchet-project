@@ -1,64 +1,56 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function Footer() {
-  const clickCountRef = useRef(0);
-  const [isIpAllowed, setIsIpAllowed] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const _c1 = useRef(0);
+  const _t1 = useRef<NodeJS.Timeout | null>(null);
+  
   const router = useRouter();
 
-  useEffect(() => {
-    const checkIp = async () => {
+  const _onTick = async () => {
+    _c1.current += 1;
+    if (_c1.current >= 5) {
+      const dId = localStorage.getItem('d_id');
       try {
-        const res = await fetch('/api/check-ip');
+        const res = await fetch('/api/verify-device', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dId }),
+        });
         const data = await res.json();
-        setIsIpAllowed(data.allowed);
-      } catch (error) {
-        console.error('Failed to check IP:', error);
+        
+        if (data.allowed) {
+          sessionStorage.setItem("allow_secret_entry", "true");
+          router.push('/secret');
+        }
+      } catch (err) {
+        console.error('Verfication error:', err);
       }
-    };
-    checkIp();
-  }, []);
-
-  const handleSecretClick = () => {
-    if (!isIpAllowed) return; // Only allow clicks if IP is authorized
-
-    clickCountRef.current += 1;
-
-    if (clickCountRef.current >= 5) {
-      router.push('/secret');
-      if (timerRef.current) clearTimeout(timerRef.current);
-      clickCountRef.current = 0;
+      _c1.current = 0;
       return;
     }
-
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-
-    timerRef.current = setTimeout(() => {
-      clickCountRef.current = 0;
-    }, 2000);
+    if (_t1.current) clearTimeout(_t1.current);
+    _t1.current = setTimeout(() => { _c1.current = 0; }, 2000);
   };
 
   return (
     <footer className="py-12 bg-brand-pink-light/30 border-t border-brand-pink-soft/20 text-center">
       <div className="max-w-7xl mx-auto px-4">
         <h3 
-          onClick={handleSecretClick}
-          className="text-xl font-medium text-brand-text mb-2 cursor-default select-none active:scale-95 transition-transform"
+          onPointerDown={() => _onTick()}
+          className="text-lg font-light text-brand-text/70 mb-2 cursor-default select-none tracking-tight"
         >
           Crochet Gallery
         </h3>
         <p className="text-sm text-brand-text/60 italic mb-6">Made with love</p>
-        <div className="flex justify-center space-x-6 mb-8 text-brand-text/50">
-          <a href="#" className="hover:text-brand-pink-accent transition-colors text-sm">Instagram</a>
-          <a href="#" className="hover:text-brand-pink-accent transition-colors text-sm">Pinterest</a>
-          <a href="#" className="hover:text-brand-pink-accent transition-colors text-sm">Etsy</a>
+        <div className="flex justify-center space-x-6 mb-8 text-brand-text/50 text-sm">
+          <a href="#" className="hover:text-brand-pink-accent transition-colors">Instagram</a>
+          <a href="#" className="hover:text-brand-pink-accent transition-colors">Pinterest</a>
+          <a href="#" className="hover:text-brand-pink-accent transition-colors">Etsy</a>
         </div>
-        <p className="text-xs text-brand-text/40">
+        <p className="text-xs text-brand-text/40 select-none">
           &copy; {new Date().getFullYear()} Crochet Gallery. All rights reserved.
         </p>
       </div>

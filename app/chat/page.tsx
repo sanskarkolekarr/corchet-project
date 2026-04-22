@@ -1,22 +1,30 @@
+'use client';
 
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import ChatUI from '@/components/ChatUI';
-import { isIpAllowed } from '@/utils/ipCheck';
 
-export default async function ChatPage() {
-  const allowed = await isIpAllowed();
-  if (!allowed) {
-    redirect('/');
-  }
+export default function ChatPage() {
+  const router = useRouter();
+  const [canAccess, setCanAccess] = useState(false);
 
-  const cookieStore = await cookies();
-  const authToken = cookieStore.get('auth_token');
+  const initialized = useRef(false);
 
-  // Server-side protection
-  if (!authToken || authToken.value !== 'secure_session_active') {
-    redirect('/secret');
-  }
+  // Access control
+  useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+
+    const allowed = sessionStorage.getItem("allow_chat_entry");
+    
+    if (allowed) {
+      setCanAccess(true);
+    } else {
+      window.location.href = "/";
+    }
+  }, []);
+
+  if (!canAccess) return null;
 
   return (
     <div className="pt-24 min-h-screen bg-brand-pink-light/10">
@@ -33,7 +41,7 @@ export default async function ChatPage() {
         
         <div className="mt-12 text-center">
            <p className="text-xs text-brand-text/30">
-             Your session will expire when you close the browser tab.
+             Your session is private and restricted. Refreshing will terminate access.
            </p>
         </div>
       </div>

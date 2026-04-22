@@ -5,7 +5,6 @@ export const crochetImages = [
   { id: 3, src: '/images/img3.jpg', alt: 'Crochet Creation 3' },
   { id: 4, src: '/images/img4.jpg', alt: 'Crochet Creation 4' },
   { id: 5, src: '/images/img5.jpg', alt: 'Crochet Creation 5' },
-  { id: 6, src: '/images/img6.jpg', alt: 'Crochet Creation 6' },
   { id: 7, src: '/images/img7.jpg', alt: 'Crochet Creation 7' },
   { id: 8, src: '/images/img8.jpg', alt: 'Crochet Creation 8' },
   { id: 9, src: '/images/img9.jpg', alt: 'Crochet Creation 9' },

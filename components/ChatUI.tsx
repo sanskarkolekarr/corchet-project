@@ -21,7 +21,7 @@ export default function ChatUI() {
     const checkAndLoadMessages = () => {
       const stored = localStorage.getItem('crochet_chat_history');
       const lastCleared = localStorage.getItem('crochet_chat_last_cleared');
-      
+
       const now = new Date();
       // IST is UTC+5:30
       const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
@@ -53,15 +53,15 @@ export default function ChatUI() {
       try {
         const res = await fetch('/api/getMessages');
         const data = await res.json();
-        
+
         if (data.success && data.messages) {
           setMessages(prev => {
             // Merge unique messages from owner
             const existingIds = new Set(prev.map(m => String(m.id)));
             const newOnes = data.messages.filter((m: Message) => !existingIds.has(String(m.id)));
-            
+
             if (newOnes.length === 0) return prev;
-            
+
             const updated = [...prev, ...newOnes].sort((a, b) => a.timestamp - b.timestamp);
             return updated;
           });
@@ -137,7 +137,7 @@ export default function ChatUI() {
       </div>
 
       {/* Messages area */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-6 space-y-4 bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')] bg-fixed"
       >
@@ -147,16 +147,15 @@ export default function ChatUI() {
           </div>
         ) : (
           messages.map((msg) => (
-            <div 
+            <div
               key={msg.id}
               className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
             >
-              <div 
-                className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${
-                  msg.sender === 'me' 
-                    ? 'bg-brand-pink-accent text-white rounded-tr-none' 
+              <div
+                className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm ${msg.sender === 'me'
+                    ? 'bg-brand-pink-accent text-white rounded-tr-none'
                     : 'bg-brand-pink-light text-brand-text rounded-tl-none'
-                } soft-shadow animate-in slide-in-from-bottom-2 duration-300`}
+                  } soft-shadow animate-in slide-in-from-bottom-2 duration-300`}
               >
                 {msg.text}
                 <div className={`text-[10px] mt-1 opacity-60 text-right`}>

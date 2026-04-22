@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { isIpAllowed } from '@/utils/ipCheck';
 
 export async function POST(request: Request) {
-  // Check IP
-  const allowed = await isIpAllowed();
-  if (!allowed) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
   // Check auth
   const token = (await cookies()).get('auth_token');
   if (!token) {
