@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import fs from 'fs';
 import path from 'path';
+import { saveMessages, getMessages } from '@/utils/messageStorage';
+import { setAllowedDevice, getAllowedDevice } from '@/utils/deviceStorage';
 
 interface TelegramMessage {
   update_id: number;
@@ -24,7 +26,8 @@ export async function GET() {
 
   try {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
+    const personalChatId = process.env.TELEGRAM_CHAT_ID;
+    const groupChatId = process.env.TELEGRAM_GROUP_CHAT_ID;
 
     // Load the last processed update ID to avoid spamming
     const offsetPath = path.join(process.cwd(), 'last_update_id.txt');
@@ -41,76 +44,67 @@ export async function GET() {
     
     if (!data.ok) {
       console.error('Telegram API Error:', data.description);
-      return NextResponse.json({ error: data.description }, { status: 500 });
+      return NextResponse.json({ success: true, messages: getMessages() });
     }
 
     if (data.result && data.result.length > 0) {
-      console.log(`Received ${data.result.length} new updates from Telegram`);
-      
       let maxUpdateId = offset;
+      const newIncomingMessages: any[] = [];
 
-      // Handle /setid command to update the owner's device ID
       for (const update of data.result) {
-        // Track the highest update_id
         if (update.update_id >= maxUpdateId) {
           maxUpdateId = update.update_id + 1;
         }
 
         const text = update.message?.text;
-        const msgChatId = update.message?.chat?.id;
+        const msgChatId = String(update.message?.chat?.id);
 
+        // 1. Check for /setid command
         if (text && text.startsWith('/setid ')) {
-          console.log(`Found /setid command from chat ${msgChatId}: ${text}`);
           const newId = text.split(' ')[1];
-          if (newId && msgChatId) {
-            const { setAllowedDevice, getAllowedDevice } = require('@/utils/deviceStorage');
-            
-            // Double-lock: Only process if it's actually a NEW ID
-            if (getAllowedDevice() === newId) {
-              console.log('ID is already set to this value, skipping...');
-              continue;
-            }
-
-            setAllowedDevice(newId);
-
-            // Send confirmation back to Telegram
-            try {
-              console.log(`Sending confirmation to ${msgChatId}...`);
-              await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  chat_id: msgChatId,
-                  text: `✅ Success! USER_DEVICE_ID has been updated to: ${newId}\n\nIt is now instantly active! No restart required.`,
-                }),
-              });
-            } catch (err) {
-              console.error('Failed to send Telegram confirmation:', err);
+          if (newId) {
+            if (getAllowedDevice() !== newId) {
+              setAllowedDevice(newId);
+              try {
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: msgChatId,
+                    text: `✅ Success! USER_DEVICE_ID updated to: ${newId}`,
+                  }),
+                });
+              } catch (err) {}
             }
           }
+          continue;
+        }
+
+        // 2. Filter messages from owner (personal or group)
+        const isFromOwner = msgChatId === String(personalChatId) || msgChatId === String(groupChatId);
+        
+        if (isFromOwner && text) {
+          newIncomingMessages.push({
+            id: `tg-${update.message.message_id}`,
+            text: text,
+            sender: 'owner',
+            timestamp: update.message.date * 1000,
+          });
         }
       }
 
-      // Save the new offset to mark messages as read
+      if (newIncomingMessages.length > 0) {
+        saveMessages(newIncomingMessages);
+      }
+
       fs.writeFileSync(offsetPath, String(maxUpdateId));
     }
 
-    const messages = (data.result || [])
-      .filter((update: TelegramMessage) => 
-        update.message && 
-        update.message.text && 
-        String(update.message.chat.id) === String(chatId)
-      )
-      .map((update: TelegramMessage) => ({
-        id: update.message.message_id,
-        text: update.message.text,
-        sender: 'owner',
-        timestamp: update.message.date * 1000,
-      }));
-
-    return NextResponse.json({ success: true, messages });
+    return NextResponse.json({ success: true, messages: getMessages() });
   } catch (error: any) {
     console.error('GET messages error:', error);
-    return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
+    return NextResponse.json({ success: true, messages: getMessages() });
   }
 }
+
+

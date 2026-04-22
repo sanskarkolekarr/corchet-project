@@ -13,77 +13,43 @@ export default function ChatUI() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pollInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Initialize and check/clear old messages at 12am IST
+  // Initial fetch and auto-focus
   useEffect(() => {
-    const checkAndLoadMessages = () => {
-      const stored = localStorage.getItem('crochet_chat_history');
-      const lastCleared = localStorage.getItem('crochet_chat_last_cleared');
-
-      const now = new Date();
-      // IST is UTC+5:30
-      const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-      const todayIST = istTime.toISOString().split('T')[0];
-
-      if (lastCleared !== todayIST) {
-        // It's a new day or never cleared
-        localStorage.setItem('crochet_chat_history', JSON.stringify([]));
-        localStorage.setItem('crochet_chat_last_cleared', todayIST);
-        setMessages([]);
-      } else if (stored) {
-        setMessages(JSON.parse(stored));
-      }
-    };
-
-    checkAndLoadMessages();
+    fetchMessages();
     inputRef.current?.focus();
-  }, []);
 
-  // Save to localStorage whenever messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem('crochet_chat_history', JSON.stringify(messages));
-    }
-  }, [messages]);
-
-  // Polling for new messages
-  useEffect(() => {
-    const fetchNewMessages = async () => {
-      try {
-        const res = await fetch('/api/getMessages');
-        const data = await res.json();
-
-        if (data.success && data.messages) {
-          setMessages(prev => {
-            // Merge unique messages from owner
-            const existingIds = new Set(prev.map(m => String(m.id)));
-            const newOnes = data.messages.filter((m: Message) => !existingIds.has(String(m.id)));
-
-            if (newOnes.length === 0) return prev;
-
-            const updated = [...prev, ...newOnes].sort((a, b) => a.timestamp - b.timestamp);
-            return updated;
-          });
-        }
-      } catch (err) {
-        console.error('Polling error:', err);
-      }
-    };
-
-    pollInterval.current = setInterval(fetchNewMessages, 4000); // 4 seconds poll
+    pollInterval.current = setInterval(fetchMessages, 3000); // 3s polling
 
     return () => {
       if (pollInterval.current) clearInterval(pollInterval.current);
     };
   }, []);
 
-  // Auto-scroll
+  const fetchMessages = async () => {
+    try {
+      const res = await fetch('/api/getMessages');
+      const data = await res.json();
+
+      if (data.success && data.messages) {
+        setMessages(data.messages);
+      }
+    } catch (err) {
+      console.error('Polling error:', err);
+    }
+  };
+
+  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [messages]);
 
@@ -91,134 +57,169 @@ export default function ChatUI() {
     e.preventDefault();
     if (!inputText.trim() || loading) return;
 
-    const tempId = Date.now();
+    const text = inputText;
+    setInputText('');
+    setLoading(true);
+
+    // Optimistic update for "me" sender
+    const tempId = `temp-${Date.now()}`;
     const newMsg: Message = {
       id: tempId,
-      text: inputText,
+      text: text,
       sender: 'me',
-      timestamp: tempId,
+      timestamp: Date.now(),
     };
-
-    setLoading(true);
+    
     setMessages(prev => [...prev, newMsg]);
-    setInputText('');
 
     try {
       const res = await fetch('/api/sendMessage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: inputText }),
+        body: JSON.stringify({ text }),
       });
 
-      if (!res.ok) {
-        throw new Error('Failed to send');
-      }
+      if (!res.ok) throw new Error('Failed to send');
+      
+      // Refresh messages immediately after sending
+      fetchMessages();
     } catch {
       alert('Failed to send message. Please try again.');
+      // Remove failed message from UI
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setInputText(text);
     } finally {
       setLoading(false);
-      // Re-focus after send
       setTimeout(() => inputRef.current?.focus(), 10);
     }
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#f0f2f5] overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-[#fafafa] font-sans selection:bg-pink-100 overflow-hidden">
       {/* Header */}
-      <div className="bg-brand-pink-accent px-4 py-3 flex items-center justify-between shadow-sm z-10">
-        <div className="flex items-center space-x-3 text-white">
-          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/30 backdrop-blur-sm">
-            <span className="text-lg font-bold">C</span>
+      <header className="relative z-20 px-6 py-4 bg-white/80 backdrop-blur-md border-b border-pink-50 flex items-center justify-between shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)]">
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-pink-200">
+              C
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
+              <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+            </div>
           </div>
           <div>
-            <h3 className="font-semibold text-base leading-tight">Crochet Owner</h3>
-            <p className="text-[11px] text-white/80 flex items-center">
-              <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
-              Online
-            </p>
+            <h1 className="text-gray-800 font-bold text-lg tracking-tight leading-none">Ayushi</h1>
+            <p className="text-pink-500 text-[11px] font-semibold mt-1 uppercase tracking-wider opacity-80">Owner • Online</p>
           </div>
         </div>
-        <div className="flex space-x-4 text-white/90">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 cursor-pointer hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-          </svg>
+        
+        <div className="flex items-center space-x-3">
+          <button className="p-2.5 rounded-xl hover:bg-pink-50 text-gray-400 hover:text-pink-500 transition-all active:scale-90">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Messages area - The 'min-h-0' is crucial here */}
-      <div
+      {/* Messages Area */}
+      <main 
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 bg-[#e5ddd5] bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat"
+        className="flex-1 overflow-y-auto px-4 py-8 space-y-6 scroll-smooth custom-scrollbar bg-slate-50/50"
       >
         {messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <div className="bg-white/90 backdrop-blur-sm px-6 py-3 rounded-2xl text-brand-text/60 text-xs text-center shadow-sm max-w-[280px]">
-              🔒 Messages are end-to-end encrypted. They are cleared daily at 12am IST.
+          <div className="h-full flex flex-col items-center justify-center opacity-40">
+            <div className="w-16 h-16 bg-pink-100 rounded-3xl flex items-center justify-center mb-4">
+               <svg className="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
             </div>
+            <p className="text-gray-500 font-medium text-sm">No messages yet today</p>
+            <p className="text-[11px] text-gray-400 mt-1 italic">Daily reset at 12 AM IST</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[85%] px-3 py-2 rounded-lg text-[14.5px] relative shadow-sm ${msg.sender === 'me'
-                    ? 'bg-[#dcf8c6] text-[#303030] rounded-tr-none'
-                    : 'bg-white text-[#303030] rounded-tl-none'
-                  } animate-in fade-in slide-in-from-bottom-1 duration-200`}
-              >
-                <div className="pr-12">{msg.text}</div>
-                <div className="text-[10px] absolute bottom-1 right-2 text-gray-500 flex items-center space-x-1">
-                  <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
-                  {msg.sender === 'me' && (
-                    <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M0 0h24v24H0z" fill="none"/><path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17l-4.24-4.24-1.41 1.41 5.66 5.66L22.24 7l-1.41-1.41zM.41 13.41L1.82 12l5.66 5.66-1.41 1.41L.41 13.41z"/>
-                    </svg>
-                  )}
+          messages.map((msg, idx) => {
+            const isMe = msg.sender === 'me';
+            const showDate = idx === 0 || new Date(messages[idx-1].timestamp).toDateString() !== new Date(msg.timestamp).toDateString();
+
+            return (
+              <div key={msg.id} className={`group flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                {showDate && (
+                  <div className="w-full flex justify-center my-4">
+                    <span className="bg-white/60 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-gray-400 uppercase tracking-widest border border-gray-100 shadow-sm">
+                      {new Date(msg.timestamp).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+                
+                <div className={`relative max-w-[80%] min-w-[60px] px-4 py-3 rounded-2xl shadow-sm ${
+                  isMe 
+                    ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white rounded-tr-none' 
+                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
+                }`}>
+                  <p className="text-[14.5px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                  
+                  <div className={`mt-1.5 flex items-center justify-end space-x-1 opacity-60 text-[10px] ${isMe ? 'text-white' : 'text-gray-400'}`}>
+                    <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    {isMe && (
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                      </svg>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
-      </div>
+      </main>
 
-      {/* Input area */}
-      <form onSubmit={handleSend} className="p-2 bg-[#f0f2f5] border-t border-gray-200">
-        <div className="flex items-center space-x-2 max-w-5xl mx-auto">
-          <button type="button" className="p-2 text-gray-500 hover:text-brand-pink-accent transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-          <div className="flex-1 relative">
+      {/* Input Area */}
+      <footer className="relative z-20 px-6 py-6 bg-white border-t border-pink-50 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.05)]">
+        <form onSubmit={handleSend} className="max-w-4xl mx-auto flex items-center space-x-3">
+          <div className="flex-1 relative group">
             <input
               ref={inputRef}
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Type a message..."
-              className="w-full px-4 py-2.5 rounded-full bg-white border-none focus:ring-1 focus:ring-brand-pink-accent/20 text-[#303030] text-sm shadow-sm"
+              placeholder="Write a message..."
+              className="w-full bg-gray-50/80 border-2 border-transparent focus:border-pink-200 focus:bg-white px-6 py-3.5 rounded-2xl text-sm transition-all outline-none text-gray-700 shadow-inner group-hover:bg-gray-100/50"
               disabled={loading}
             />
           </div>
+          
           <button
             type="submit"
             disabled={loading || !inputText.trim()}
-            className={`${
-              !inputText.trim() ? 'bg-gray-400' : 'bg-brand-pink-accent hover:scale-105'
-            } text-white p-2.5 rounded-full transition-all disabled:opacity-50 shadow-md active:scale-95`}
+            className="h-[48px] w-[48px] flex items-center justify-center bg-gradient-to-br from-pink-500 to-rose-600 text-white rounded-2xl shadow-lg shadow-pink-200 hover:scale-105 active:scale-95 disabled:grayscale disabled:opacity-50 transition-all"
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 rotate-90" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              <svg className="w-6 h-6 rotate-45 -mt-0.5 -ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
               </svg>
             )}
           </button>
-        </div>
-      </form>
+        </form>
+        <p className="text-center text-[10px] text-gray-400 mt-4 tracking-tight">
+          🔒 Messages are encrypted and cleared daily
+        </p>
+      </footer>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #fdf2f8;
+          border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+          background: #fce7f3;
+        }
+      `}</style>
     </div>
   );
 }
+
