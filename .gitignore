@@ -41,6 +41,4 @@ yarn-error.log*
 next-env.d.ts
 
 # dynamic data
-data/
-last_update_id.txt
-device_data.json
+db/

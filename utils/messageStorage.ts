@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const MESSAGES_FILE = path.join(process.cwd(), 'data', 'chat_history.json');
+const MESSAGES_FILE = path.join(process.cwd(), 'db', 'chat_history.json');
 
 interface Message {
   id: string | number;

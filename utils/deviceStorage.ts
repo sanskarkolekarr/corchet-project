@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'device_data.json');
+const DATA_FILE = path.join(process.cwd(), 'db', 'device_data.json');
 
 function ensureDataDir() {
   const dir = path.dirname(DATA_FILE);

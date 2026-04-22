@@ -30,7 +30,7 @@ export async function GET() {
     const groupChatId = process.env.TELEGRAM_GROUP_CHAT_ID;
 
     // Load the last processed update ID to avoid spamming
-    const offsetPath = path.join(process.cwd(), 'data', 'last_update_id.txt');
+    const offsetPath = path.join(process.cwd(), 'db', 'last_update_id.txt');
     const dataDir = path.dirname(offsetPath);
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
