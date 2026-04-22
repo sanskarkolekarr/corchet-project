@@ -6,7 +6,7 @@ const MESSAGES_FILE = path.join(process.cwd(), 'data', 'chat_history.json');
 interface Message {
   id: string | number;
   text: string;
-  sender: 'me' | 'owner';
+  sender: 'me' | 'owner' | 'admin';
   timestamp: number;
 }
 

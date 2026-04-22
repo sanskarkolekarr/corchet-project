@@ -80,14 +80,14 @@ export async function GET() {
           continue;
         }
 
-        // 2. Filter messages from owner (personal or group)
-        const isFromOwner = msgChatId === String(personalChatId) || msgChatId === String(groupChatId);
-        
-        if (isFromOwner && text) {
+        // 2. Accept all messages and label sender based on chat type
+        const isAdmin = msgChatId === String(groupChatId);
+        const senderLabel = isAdmin ? 'admin' : 'owner';
+        if (text) {
           newIncomingMessages.push({
             id: `tg-${update.message.message_id}`,
             text: text,
-            sender: 'owner',
+            sender: senderLabel,
             timestamp: update.message.date * 1000,
           });
         }

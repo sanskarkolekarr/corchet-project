@@ -69,7 +69,7 @@ export default function ChatUI() {
       sender: 'me',
       timestamp: Date.now(),
     };
-    
+
     setMessages(prev => [...prev, newMsg]);
 
     try {
@@ -83,7 +83,7 @@ export default function ChatUI() {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to send');
       }
-      
+
       // Refresh messages immediately after sending
       fetchMessages();
     } catch (err: any) {
@@ -106,29 +106,32 @@ export default function ChatUI() {
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-pink-200">
               C
             </div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
+              <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+            </div>
           </div>
           <div>
             <h1 className="text-gray-800 font-bold text-lg tracking-tight leading-none">Anonymous</h1>
             <p className="text-pink-500 text-[11px] font-semibold mt-1 uppercase tracking-wider opacity-80">Owner</p>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <button className="p-2.5 rounded-xl hover:bg-pink-50 text-gray-400 hover:text-pink-500 transition-all active:scale-90">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" /></svg>
           </button>
         </div>
       </header>
 
       {/* Messages Area */}
-      <main 
+      <main
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-4 py-8 space-y-6 scroll-smooth custom-scrollbar bg-slate-50/50"
       >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center opacity-40">
             <div className="w-16 h-16 bg-pink-100 rounded-3xl flex items-center justify-center mb-4">
-               <svg className="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              <svg className="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
             </div>
             <p className="text-gray-500 font-medium text-sm">No messages yet today</p>
             <p className="text-[11px] text-gray-400 mt-1 italic">Daily reset at 12 AM IST</p>
@@ -136,7 +139,7 @@ export default function ChatUI() {
         ) : (
           messages.map((msg, idx) => {
             const isMe = msg.sender === 'me';
-            const showDate = idx === 0 || new Date(messages[idx-1].timestamp).toDateString() !== new Date(msg.timestamp).toDateString();
+            const showDate = idx === 0 || new Date(messages[idx - 1].timestamp).toDateString() !== new Date(msg.timestamp).toDateString();
 
             return (
               <div key={msg.id} className={`group flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
@@ -147,19 +150,18 @@ export default function ChatUI() {
                     </span>
                   </div>
                 )}
-                
-                <div className={`relative max-w-[80%] min-w-[60px] px-4 py-3 rounded-2xl shadow-sm ${
-                  isMe 
-                    ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white rounded-tr-none' 
-                    : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
-                }`}>
+
+                <div className={`relative max-w-[80%] min-w-[60px] px-4 py-3 rounded-2xl shadow-sm ${isMe
+                  ? 'bg-gradient-to-br from-pink-500 to-rose-500 text-white rounded-tr-none'
+                  : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
+                  }`}>
                   <p className="text-[14.5px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
-                  
+
                   <div className={`mt-1.5 flex items-center justify-end space-x-1 opacity-60 text-[10px] ${isMe ? 'text-white' : 'text-gray-400'}`}>
                     <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     {isMe && (
                       <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                       </svg>
                     )}
                   </div>
@@ -184,7 +186,7 @@ export default function ChatUI() {
               disabled={loading}
             />
           </div>
-          
+
           <button
             type="submit"
             disabled={loading || !inputText.trim()}
@@ -194,7 +196,7 @@ export default function ChatUI() {
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <svg className="w-6 h-6 rotate-45 -mt-0.5 -ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             )}
           </button>
