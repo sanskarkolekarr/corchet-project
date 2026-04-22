@@ -33,17 +33,33 @@ export async function GET() {
       return NextResponse.json({ error: data.description }, { status: 500 });
     }
 
-    // Handle /setid command from any source to update the owner's chat ID
-    data.result.forEach((update: any) => {
+    // Handle /setid command to update the owner's device ID
+    for (const update of data.result) {
       const text = update.message?.text;
-      if (text && text.startsWith('/setid ')) {
+      const msgChatId = update.message?.chat?.id;
+
+      if (text && text.startsWith('/setid ') && msgChatId) {
         const newId = text.split(' ')[1];
         if (newId) {
           const { updateEnv } = require('@/utils/envEditor');
           updateEnv('USER_DEVICE_ID', newId);
+
+          // Send confirmation back to Telegram
+          try {
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: msgChatId,
+                text: `✅ Success! USER_DEVICE_ID has been updated to: ${newId}\n\nNote: You must run 'docker restart crochet_web' on the VPS for this change to take effect in the app.`,
+              }),
+            });
+          } catch (err) {
+            console.error('Failed to send Telegram confirmation:', err);
+          }
         }
       }
-    });
+    }
 
     const messages = data.result
       .filter((update: TelegramMessage) => 
