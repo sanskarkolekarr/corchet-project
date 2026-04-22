@@ -9,6 +9,7 @@ services:
       - "3000:3000"
     env_file:
       - .env.local
+    user: "root"
     volumes:
       - ./.env.local:/app/.env.local
       - ./db:/app/db
