@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 interface Message {
   id: string | number;
   text: string;
-  sender: 'me' | 'owner';
+  sender: 'me' | 'owner' | 'admin';
   timestamp: number;
 }
 
@@ -79,12 +79,15 @@ export default function ChatUI() {
         body: JSON.stringify({ text }),
       });
 
-      if (!res.ok) throw new Error('Failed to send');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to send');
+      }
       
       // Refresh messages immediately after sending
       fetchMessages();
-    } catch {
-      alert('Failed to send message. Please try again.');
+    } catch (err: any) {
+      alert(err.message || 'Failed to send message. Please try again.');
       // Remove failed message from UI
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setInputText(text);
