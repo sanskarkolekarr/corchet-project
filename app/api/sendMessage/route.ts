@@ -19,8 +19,8 @@ export async function POST(request: Request) {
     const personalChatId = process.env.TELEGRAM_CHAT_ID;
     const groupChatId = process.env.TELEGRAM_GROUP_CHAT_ID;
     
-    // We send to the group if available, otherwise personal
-    const targetChatId = groupChatId || personalChatId;
+    // Send specifically to personal DM as requested
+    const targetChatId = personalChatId || groupChatId;
 
     const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
