@@ -27,7 +27,7 @@ export default function ChatPage() {
   if (!canAccess) return null;
 
   return (
-    <div className="flex-1 flex flex-col bg-brand-pink-light/10 h-[calc(100dvh-4rem)] sm:h-[calc(100dvh-16rem)]">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-brand-pink-light/10 overflow-hidden">
       <div className="flex-1 w-full flex flex-col">
         <ChatUI />
       </div>
