@@ -106,13 +106,10 @@ export default function ChatUI() {
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-pink-200">
               C
             </div>
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center">
-              <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-            </div>
           </div>
           <div>
-            <h1 className="text-gray-800 font-bold text-lg tracking-tight leading-none">Ayushi</h1>
-            <p className="text-pink-500 text-[11px] font-semibold mt-1 uppercase tracking-wider opacity-80">Owner • Online</p>
+            <h1 className="text-gray-800 font-bold text-lg tracking-tight leading-none">Anonymous</h1>
+            <p className="text-pink-500 text-[11px] font-semibold mt-1 uppercase tracking-wider opacity-80">Owner</p>
           </div>
         </div>
         
