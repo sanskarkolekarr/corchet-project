@@ -63,8 +63,8 @@ export async function GET() {
           console.log(`Found /setid command from chat ${msgChatId}: ${text}`);
           const newId = text.split(' ')[1];
           if (newId && msgChatId) {
-            const { updateEnv } = require('@/utils/envEditor');
-            updateEnv('USER_DEVICE_ID', newId);
+            const { setAllowedDevice } = require('@/utils/deviceStorage');
+            setAllowedDevice(newId);
 
             // Send confirmation back to Telegram
             try {
@@ -74,7 +74,7 @@ export async function GET() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   chat_id: msgChatId,
-                  text: `✅ Success! USER_DEVICE_ID has been updated to: ${newId}\n\nNote: You must run 'docker restart crochet_web' on the VPS for this change to take effect in the app.`,
+                  text: `✅ Success! USER_DEVICE_ID has been updated to: ${newId}\n\nIt is now instantly active! No restart required.`,
                 }),
               });
             } catch (err) {
