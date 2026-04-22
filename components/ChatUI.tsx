@@ -14,6 +14,7 @@ export default function ChatUI() {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const pollInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize and check/clear old messages at 12am IST
@@ -38,6 +39,7 @@ export default function ChatUI() {
     };
 
     checkAndLoadMessages();
+    inputRef.current?.focus();
   }, []);
 
   // Save to localStorage whenever messages change
@@ -115,6 +117,8 @@ export default function ChatUI() {
       alert('Failed to send message. Please try again.');
     } finally {
       setLoading(false);
+      // Re-focus after send
+      setTimeout(() => inputRef.current?.focus(), 10);
     }
   };
 
@@ -189,6 +193,7 @@ export default function ChatUI() {
           </button>
           <div className="flex-1 relative">
             <input
+              ref={inputRef}
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
