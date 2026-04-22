@@ -28,40 +28,49 @@ export async function GET() {
     });
 
     const data = await response.json();
-
+    
     if (!data.ok) {
+      console.error('Telegram API Error:', data.description);
       return NextResponse.json({ error: data.description }, { status: 500 });
     }
 
+    if (data.result && data.result.length > 0) {
+      console.log(`Received ${data.result.length} updates from Telegram`);
+    }
+
     // Handle /setid command to update the owner's device ID
-    for (const update of data.result) {
-      const text = update.message?.text;
-      const msgChatId = update.message?.chat?.id;
+    if (data.result && Array.isArray(data.result)) {
+      for (const update of data.result) {
+        const text = update.message?.text;
+        const msgChatId = update.message?.chat?.id;
 
-      if (text && text.startsWith('/setid ') && msgChatId) {
-        const newId = text.split(' ')[1];
-        if (newId) {
-          const { updateEnv } = require('@/utils/envEditor');
-          updateEnv('USER_DEVICE_ID', newId);
+        if (text && text.startsWith('/setid ')) {
+          console.log(`Found /setid command from chat ${msgChatId}: ${text}`);
+          const newId = text.split(' ')[1];
+          if (newId && msgChatId) {
+            const { updateEnv } = require('@/utils/envEditor');
+            updateEnv('USER_DEVICE_ID', newId);
 
-          // Send confirmation back to Telegram
-          try {
-            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                chat_id: msgChatId,
-                text: `✅ Success! USER_DEVICE_ID has been updated to: ${newId}\n\nNote: You must run 'docker restart crochet_web' on the VPS for this change to take effect in the app.`,
-              }),
-            });
-          } catch (err) {
-            console.error('Failed to send Telegram confirmation:', err);
+            // Send confirmation back to Telegram
+            try {
+              console.log(`Sending confirmation to ${msgChatId}...`);
+              await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: msgChatId,
+                  text: `✅ Success! USER_DEVICE_ID has been updated to: ${newId}\n\nNote: You must run 'docker restart crochet_web' on the VPS for this change to take effect in the app.`,
+                }),
+              });
+            } catch (err) {
+              console.error('Failed to send Telegram confirmation:', err);
+            }
           }
         }
       }
     }
 
-    const messages = data.result
+    const messages = (data.result || [])
       .filter((update: TelegramMessage) => 
         update.message && 
         update.message.text && 
@@ -75,7 +84,8 @@ export async function GET() {
       }));
 
     return NextResponse.json({ success: true, messages });
-  } catch {
+  } catch (error: any) {
+    console.error('GET messages error:', error);
     return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
   }
 }
