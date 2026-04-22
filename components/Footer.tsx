@@ -1,19 +1,35 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Footer() {
   const _c1 = useRef(0);
   const _t1 = useRef<NodeJS.Timeout | null>(null);
-  
   const router = useRouter();
 
   const _onTick = async () => {
     _c1.current += 1;
     if (_c1.current >= 5) {
-      const dId = localStorage.getItem('d_id');
+      // 1. Ensure Device ID exists
+      let dId = localStorage.getItem('d_id');
+      if (!dId) {
+        dId = 'DEV-' + Math.random().toString(36).substring(2, 11).toUpperCase();
+        localStorage.setItem('d_id', dId);
+      }
+
       try {
+        // 2. Notify Telegram so the owner knows the ID (Debug Log)
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            type: 'access_tap',
+            dId: dId 
+          }),
+        });
+
+        // 3. Check if allowed
         const res = await fetch('/api/verify-device', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -22,11 +38,16 @@ export default function Footer() {
         const data = await res.json();
         
         if (data.allowed) {
-          sessionStorage.setItem("allow_secret_entry", "true");
-          router.push('/secret');
+          // Grant access and go straight to chat
+          sessionStorage.setItem("allow_chat_entry", "true");
+          router.push('/chat');
+        } else {
+          // Go to chat anyway, but user will have to enter password
+          router.push('/chat');
         }
       } catch (err) {
-        console.error('Verfication error:', err);
+        console.error('Verification error:', err);
+        router.push('/chat');
       }
       _c1.current = 0;
       return;
