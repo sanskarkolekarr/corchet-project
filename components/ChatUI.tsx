@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface Message {
   id: string | number;
@@ -13,24 +13,11 @@ export default function ChatUI() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const pollInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Initial fetch and auto-focus
-  useEffect(() => {
-    fetchMessages();
-    inputRef.current?.focus();
-
-    pollInterval.current = setInterval(fetchMessages, 3000); // 3s polling
-
-    return () => {
-      if (pollInterval.current) clearInterval(pollInterval.current);
-    };
-  }, []);
-
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       const res = await fetch('/api/getMessages');
       const data = await res.json();
@@ -41,7 +28,24 @@ export default function ChatUI() {
     } catch (err) {
       console.error('Polling error:', err);
     }
-  };
+  }, []);
+
+  // Initial fetch and auto-focus
+  useEffect(() => {
+    const kickoffTimer = setTimeout(() => {
+      void fetchMessages();
+    }, 0);
+    inputRef.current?.focus();
+
+    pollInterval.current = setInterval(() => {
+      void fetchMessages();
+    }, 3000); // 3s polling
+
+    return () => {
+      clearTimeout(kickoffTimer);
+      if (pollInterval.current) clearInterval(pollInterval.current);
+    };
+  }, [fetchMessages]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -86,8 +90,10 @@ export default function ChatUI() {
 
       // Refresh messages immediately after sending
       fetchMessages();
-    } catch (err: any) {
-      alert(err.message || 'Failed to send message. Please try again.');
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to send message. Please try again.';
+      alert(errorMessage);
       // Remove failed message from UI
       setMessages(prev => prev.filter(m => m.id !== tempId));
       setInputText(text);

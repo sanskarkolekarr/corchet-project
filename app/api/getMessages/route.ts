@@ -5,9 +5,9 @@ import path from 'path';
 import { saveMessages, getMessages } from '@/utils/messageStorage';
 import { setAllowedDevice, getAllowedDevice } from '@/utils/deviceStorage';
 
-interface TelegramMessage {
+interface TelegramUpdate {
   update_id: number;
-  message: {
+  message?: {
     message_id: number;
     text?: string;
     chat: {
@@ -15,6 +15,12 @@ interface TelegramMessage {
     };
     date: number;
   };
+}
+
+interface TelegramApiResponse {
+  ok: boolean;
+  description?: string;
+  result?: TelegramUpdate[];
 }
 
 export async function GET() {
@@ -26,7 +32,6 @@ export async function GET() {
 
   try {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const personalChatId = process.env.TELEGRAM_CHAT_ID;
     const groupChatId = process.env.TELEGRAM_GROUP_CHAT_ID;
 
     // Load the last processed update ID to avoid spamming
@@ -45,7 +50,7 @@ export async function GET() {
       next: { revalidate: 0 }
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as TelegramApiResponse;
     
     if (!data.ok) {
       console.error('Telegram API Error:', data.description);
@@ -54,15 +59,25 @@ export async function GET() {
 
     if (data.result && data.result.length > 0) {
       let maxUpdateId = offset;
-      const newIncomingMessages: any[] = [];
+      const newIncomingMessages: Array<{
+        id: string;
+        text: string;
+        sender: 'admin' | 'owner';
+        timestamp: number;
+      }> = [];
 
       for (const update of data.result) {
         if (update.update_id >= maxUpdateId) {
           maxUpdateId = update.update_id + 1;
         }
 
-        const text = update.message?.text;
-        const msgChatId = String(update.message?.chat?.id);
+        const message = update.message;
+        if (!message) {
+          continue;
+        }
+
+        const text = message.text;
+        const msgChatId = String(message.chat.id);
 
         // 1. Check for /setid command
         if (text && text.startsWith('/setid ')) {
@@ -79,7 +94,7 @@ export async function GET() {
                     text: `✅ Success! USER_DEVICE_ID updated to: ${newId}`,
                   }),
                 });
-              } catch (err) {}
+              } catch {}
             }
           }
           continue;
@@ -90,10 +105,10 @@ export async function GET() {
         const senderLabel = isAdmin ? 'admin' : 'owner';
         if (text) {
           newIncomingMessages.push({
-            id: `tg-${update.message.message_id}`,
+            id: `tg-${message.message_id}`,
             text: text,
             sender: senderLabel,
-            timestamp: update.message.date * 1000,
+            timestamp: message.date * 1000,
           });
         }
       }
@@ -106,7 +121,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ success: true, messages: getMessages() });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('GET messages error:', error);
     return NextResponse.json({ success: true, messages: getMessages() });
   }

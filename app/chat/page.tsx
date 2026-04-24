@@ -1,28 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import ChatUI from '@/components/ChatUI';
 
 export default function ChatPage() {
-  const router = useRouter();
-  const [canAccess, setCanAccess] = useState(false);
-
-  const initialized = useRef(false);
+  const [canAccess] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(sessionStorage.getItem('allow_chat_entry'));
+  });
 
   // Access control
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-
-    const allowed = sessionStorage.getItem("allow_chat_entry");
-    
-    if (allowed) {
-      setCanAccess(true);
-    } else {
-      window.location.href = "/";
+    if (!canAccess) {
+      window.location.href = '/';
     }
-  }, []);
+  }, [canAccess]);
 
   if (!canAccess) return null;
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { getAllowedDevice } from '@/utils/deviceStorage';
 
 export async function POST(request: Request) {

@@ -29,9 +29,9 @@ export function getAllowedDevice() {
 export function setAllowedDevice(id: string) {
   try {
     ensureDataDir();
-    let data: any = {};
+    let data: Record<string, unknown> = {};
     if (fs.existsSync(DATA_FILE)) {
-      data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+      data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')) as Record<string, unknown>;
     }
     data.USER_DEVICE_ID = id;
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));

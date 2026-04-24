@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function SecretPage() {
@@ -18,21 +18,18 @@ export default function SecretPage() {
   }, []);
 
   // Strict session protection
-  const [canAccess, setCanAccess] = useState(false);
-  const initialized = useRef(false);
+  const [canAccess] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return Boolean(sessionStorage.getItem('allow_secret_entry'));
+  });
 
   useEffect(() => {
-    if (initialized.current) return;
-    initialized.current = true;
-
-    const allowed = sessionStorage.getItem("allow_secret_entry");
-    if (allowed) {
-      setCanAccess(true);
-      sessionStorage.removeItem("allow_secret_entry");
-    } else {
-      window.location.href = "/";
+    if (canAccess) {
+      sessionStorage.removeItem('allow_secret_entry');
+      return;
     }
-  }, []);
+    window.location.href = '/';
+  }, [canAccess]);
 
   if (!canAccess) return null;
 
